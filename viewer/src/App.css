@@ -34,6 +34,47 @@
     margin: auto;
 }
 
+.legend {
+    position: absolute;
+    right: 150px;
+    top: 150px;
+    background-color: rgba(255,255,255,0.2);
+    display: flex;
+}
+
+.hidden {
+  display: none;
+}
+
+.legend-labels {
+    text-align: right;
+}
+
+.legend-values {
+    text-align: left;
+}
+
+.legend-line {
+    display: flex;
+}
+
+
+.legend-label:after {
+    content: ": ";
+    /*position: absolute;
+    top: -8px;
+    right: -2px;*/
+}
+
+.tweet-box {
+  color: #00fe00;
+  background-color: black;
+  border: 5px solid white;
+  border-radius: 3px;
+  position: absolute;
+  top: 20px;
+}
+
 .App-header {
   /*background-color: #222;*/
   display: flex;

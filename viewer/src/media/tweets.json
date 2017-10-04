@@ -1,4 +1,5 @@
 [{
+    "pixel_coords": [1,20],
     "coordinates":
     {
         "coordinates":
@@ -41,7 +42,7 @@
   "contributors": [
     14927800
   ],
-  "text": "Along with our new #Twitterbird, we've also updated our Display Guidelines: https://t.co/Ed4omjYs  ^JC",
+  "text": "Clap along if you feel that mappiness is the truth",
   "retweet_count": 66,
   "in_reply_to_status_id_str": null,
   "id": 210462857140252672,
