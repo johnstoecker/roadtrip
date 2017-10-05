@@ -17,25 +17,21 @@ client = MongoClient(MONGO_HOST)
 # Use twitterdb database. If it doesn't exist, it will be created.
 db = client.ironmapsdb
 
-# Decode the JSON from Twitter
-# datajson = json.loads(data)
-
-#grab the 'created_at' data from the Tweet to use for display
-created_at = datajson['created_at']
-
-#print out a message to the screen that we have collected a tweet
-print("Tweet collected at " + str(created_at))
-
-
 auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
 
-last_tweet = db.tweets.find().limit(1).sort({$natural:-1})
+cursor = db.tweets.find().limit(1).sort([("id", -1)])
 
 api = tweepy.API(auth)
-new_tweets = api.home_timeline(since_id=last_tweet.id_str,count=200)
 
-#insert the data into the mongoDB into a collection called twitter_search
-#if twitter_search doesn't exist, it will be created.
-db.tweets.insert(new_tweets)
+try:
+    record = cursor.next()
+    new_tweets = api.home_timeline(since_id=record.id,count=200)
+except StopIteration:
+    new_tweets = api.home_timeline(count=200)
+
+for s in new_tweets:
+    if db.tweets.find_one({'text':s.text}) == None: # prevent duplicate tweets being stored
+        tweet_to_save = {'text':s.text, 'id':s.id, 'created_at':s.created_at,'screen_name':s.author.screen_name,'author_id':s.author.id, 'geo':s.geo, 'coordinates':s.coordinates}
+        db.tweets.save(tweet_to_save)
