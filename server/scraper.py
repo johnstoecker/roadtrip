@@ -32,21 +32,25 @@ with open('pixel_map.json') as json_data:
 
     try:
         record = cursor.next()
-        new_tweets = api.home_timeline(since_id=record.id,count=200)
+        print(record["id"])
+        new_tweets = api.home_timeline(since_id=record["id"],count=200)
     except StopIteration:
         new_tweets = api.home_timeline(count=200)
 
-    for s in new_tweets:
+    for s in reversed(new_tweets):
         if db.tweets.find_one({'text':s.text}) == None: # prevent duplicate tweets being stored
+            print(s)
             if s.coordinates:
-                coords = s.coordinates.coordinates
+                coords = s.coordinates["coordinates"]
                 # // top left coords in pixelMap
                 # // tweets are in [long, lat]
                 for pm in pixelMap:
                 #     -122.14310264,37.05701649
                 #    "longitude":-122.4992,"latitude":37.6336
                     if pm["latitude"]>coords[1] and pm["longitude"]<coords[0] and pm["latitude"]-0.81<coords[1] and pm["longitude"]+0.81>coords[0]:
-                        s.pixel_coords = pixelMap[i]["coords"]
-
-            tweet_to_save = {'text':s.text, 'id':s.id, 'created_at':s.created_at,'screen_name':s.author.screen_name,'author_id':s.author.id, 'geo':s.geo, 'coordinates':s.coordinates, 'pixel_coords': s.pixel_coords}
+                        s.pixel_coords = pm["coords"]
+            try:
+                tweet_to_save = {'text':s.text, 'id':s.id, 'created_at':s.created_at,'screen_name':s.author.screen_name,'author_id':s.author.id, 'geo':s.geo, 'coordinates':s.coordinates, 'pixel_coords': s.pixel_coords}
+            except AttributeError:
+                tweet_to_save = {'text':s.text, 'id':s.id, 'created_at':s.created_at,'screen_name':s.author.screen_name,'author_id':s.author.id, 'geo':s.geo, 'coordinates':s.coordinates}
             db.tweets.save(tweet_to_save)
