@@ -45,7 +45,7 @@ with open('pixel_map.json') as json_data:
                 for pm in pixelMap:
                 #     -122.14310264,37.05701649
                 #    "longitude":-122.4992,"latitude":37.6336
-                    if(pm["latitude"]>coords[1] && pm["longitude"]<coords[0] && pm["latitude"]-0.81<coords[1] && pm["longitude"]+0.81>coords[0]):
+                    if pm["latitude"]>coords[1] and pm["longitude"]<coords[0] and pm["latitude"]-0.81<coords[1] and pm["longitude"]+0.81>coords[0]:
                         s.pixel_coords = pixelMap[i]["coords"]
 
             tweet_to_save = {'text':s.text, 'id':s.id, 'created_at':s.created_at,'screen_name':s.author.screen_name,'author_id':s.author.id, 'geo':s.geo, 'coordinates':s.coordinates, 'pixel_coords': s.pixel_coords}
