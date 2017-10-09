@@ -9,9 +9,26 @@
 }
 
 .path-square {
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
     background-color: green;
+}
+
+.path-square.active {
+    background-color: #00fe00;
+}
+
+.tweet-image {
+    max-width: 290px;
+    max-height: auto;
+}
+
+.location-label {
+    position: relative;
+    top: 20px;
+    left: -25px;
+    width: 80px;
+    font-size: 18px;
 }
 
 .hover-zoom {
@@ -73,6 +90,19 @@
   border-radius: 3px;
   position: absolute;
   top: 20px;
+  min-width: 300px;
+  z-index: 1000;
+}
+
+.navigation {
+  font-size: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navigator:hover {
+  cursor: pointer;
 }
 
 .App-header {

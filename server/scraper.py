@@ -50,7 +50,7 @@ with open('pixel_map.json') as json_data:
                     if pm["latitude"]>coords[1] and pm["longitude"]<coords[0] and pm["latitude"]-0.81<coords[1] and pm["longitude"]+0.81>coords[0]:
                         s.pixel_coords = pm["coords"]
             try:
-                tweet_to_save = {'text':s.text, 'id':s.id, 'created_at':s.created_at,'screen_name':s.author.screen_name,'author_id':s.author.id, 'geo':s.geo, 'coordinates':s.coordinates, 'pixel_coords': s.pixel_coords}
+                tweet_to_save = {'text':s.text, 'id':s.id, 'created_at':s.created_at,'screen_name':s.author.screen_name,'author_id':s.author.id, 'geo':s.geo, 'coordinates':s.coordinates, 'pixel_coords': s.pixel_coords, 'entities': s.entities}
             except AttributeError:
-                tweet_to_save = {'text':s.text, 'id':s.id, 'created_at':s.created_at,'screen_name':s.author.screen_name,'author_id':s.author.id, 'geo':s.geo, 'coordinates':s.coordinates}
+                tweet_to_save = {'text':s.text, 'id':s.id, 'created_at':s.created_at,'screen_name':s.author.screen_name,'author_id':s.author.id, 'geo':s.geo, 'coordinates':s.coordinates, 'entities': s.entities}
             db.tweets.save(tweet_to_save)
