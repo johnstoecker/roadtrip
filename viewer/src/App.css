@@ -121,7 +121,95 @@
   font-size: large;
 }
 
-@keyframes App-logo-spin {
+/*@keyframes App-logo-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}*/
+
+@media screen and (max-width: 1050px) and (min-width: 500px) {
+  .App-header {
+    height: 80px;
+    font-size: 50px;
+  }
+
+  .App-logo {
+    height: 50px;
+  }
+
+  .map {
+      height: 300px;
+      width: 525px;
+      background-size: contain;
+  }
+
+  .legend {
+    top: 50px;
+    right: 50px;
+  }
+
+  .path-square {
+      width: 7px;
+      height: 7px;
+  }
+
+  .location-label {
+      position: relative;
+      top: 10px;
+      left: -25px;
+      width: 70px;
+      font-size: 16px;
+  }
+
+  .tweet-box {
+    position: fixed;
+    left: 0px;
+    top:451px;
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 525px) {
+  .App-header {
+    height: 80px;
+    font-size: 50px;
+  }
+
+  .App-logo {
+    height: 50px;
+  }
+
+  .App-logo-second {
+    display: none;
+  }
+
+  .map {
+      height: 150px;
+      width: 262px;
+      background-size: contain;
+  }
+  .legend {
+    top: 0px;
+    right: 0px;
+    font-size: 16px;
+  }
+
+  .path-square {
+      width: 4px;
+      height: 4px;
+  }
+
+  .location-label {
+      position: relative;
+      top: 10px;
+      left: -22px;
+      width: 50px;
+      font-size: 14px;
+  }
+
+  .tweet-box {
+    position: fixed;
+    left: 0px;
+    top:301px;
+    width: 100%;
+  }
 }

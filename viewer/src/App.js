@@ -7,8 +7,6 @@ import tripTotals from "./media/totals.json"
 import PixelSquare from "./components/PixelSquare.jsx"
 import $ from 'jquery';
 import './App.css';
-// change for mobile?
-const pixelScale = 12;
 
 class App extends Component {
   constructor(props) {
@@ -23,12 +21,26 @@ class App extends Component {
       miles: 0,
       jokes: 0,
       questsAccepted: 0,
-      questsCompleted: 0
+      questsCompleted: 0,
+      width: '0',
+      height: '0'
     }
+    this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
   }
 
   componentDidMount() {
+    this.updateWindowDimensions();
+    window.addEventListener('resize', this.updateWindowDimensions);
     this.getTweets();
+  }
+
+  componentWillUnmount() {
+    this.clearTimeout()
+    window.removeEventListener('resize', this.updateWindowDimensions);
+  }
+
+  updateWindowDimensions() {
+    this.setState({ width: window.innerWidth, height: window.innerHeight });
   }
 
   // switched lat/lon params up, twitter coordinates, also converted to miles
@@ -116,9 +128,9 @@ class App extends Component {
     console.log("hi")
     console.log(keyCode.keyCode)
     if(keyCode.keyCode == 37) {
-      this.showNext(true)
+      this.goToPrevious()
     } else if(keyCode.keyCode == 39) {
-      this.showNext(false)
+      this.goToNext()
     } else if(keyCode.keyCode == 32) {
       if (this.state.isPlaying) {
         this.pause()
@@ -128,7 +140,13 @@ class App extends Component {
     }
   }
 
-  showPrevious() {
+  goToNext() {
+    this.pause()
+    this.showNext(false)
+  }
+
+  goToPrevious() {
+    this.pause()
     this.showNext(true)
   }
 
@@ -239,10 +257,24 @@ class App extends Component {
   }
 
   render() {
-    const pathPixels = (this.state.pathPixelDetails || []).map((pathPixelDetail, index) =>
-      <div className="path-pixel" style={{position: 'absolute', left:(pathPixelDetail["coords"][0]+1)*(pixelScale+2), top:pathPixelDetail["coords"][1]*(pixelScale+2)-1}}>
+    const pathPixels = (this.state.pathPixelDetails || []).map((pathPixelDetail, index) => {
+      // yes, yes, these should be constants.....
+      // 12 -- normal window
+      // 6 -- small window (phone)
+      // 3 -- tiny (small phone)
+      var leftPos = (pathPixelDetail["coords"][0]+1)*(12+2)
+      var topPos = pathPixelDetail["coords"][1]*(12+2)-1
+      if(this.state.width <= 525) {
+        var leftPos = Math.floor((pathPixelDetail["coords"][0]+2)*(3.5))-4
+        var topPos = Math.floor(pathPixelDetail["coords"][1]*(3.5))
+      } else if (this.state.width <= 1050) {
+        var leftPos = (pathPixelDetail["coords"][0]+1)*(6+1)
+        var topPos = (pathPixelDetail["coords"][1]+1)*(6+1)-7
+      }
+      return (<div className="path-pixel" style={{position: 'absolute', left: leftPos, top:topPos}}>
           <PixelSquare pathPixelIndex={index} pathPixel={pathPixelDetail} closePixel={(event) => { this.closePixel(event) }} onPixelClick={(event) => { this.showPixelSquare(event) }}/>
-      </div>
+      </div>)
+    }
     );
     const totals = (
         <div className="legend">
@@ -261,10 +293,10 @@ class App extends Component {
 
     const navigation = (
       <div className="navigation ignore-react-onclickoutside">
-        <div className="navigator navigate-left" onClick={this.showNext.bind(this, true)}>←</div>
+        <div className="navigator navigate-left" onClick={this.goToPrevious.bind(this)}>←</div>
         <div className={"navigator navigate-play " + (this.state.isPlaying && 'hidden')} onClick={this.play.bind(this)}>▶</div>
         <div className={"navigator navigate-pause " +(this.state.isPlaying || 'hidden')} onClick={this.pause.bind(this)}>❚❚</div>
-        <div className="navigator navigate-right"onClick={this.showNext.bind(this, false)}>→</div>
+        <div className="navigator navigate-right"onClick={this.goToNext.bind(this)}>→</div>
       </div>
     )
 
@@ -273,7 +305,7 @@ class App extends Component {
         <div className="App-header">
           <img src={wagon} className="App-logo" alt="logo" />
           Iron Maps
-          <img src={wagon} className="App-logo" alt="logo" />
+          <img src={wagon} className="App-logo App-logo-second" alt="logo" />
         </div>
         {navigation}
         <div className="map">
