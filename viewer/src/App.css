@@ -1,6 +1,7 @@
 .App {
   text-align: center;
   background-color: grey;
+  min-height: 100vh;
 }
 
 .App-logo {
@@ -15,6 +16,10 @@
 }
 
 .path-square.active {
+    background-color: #00fe00;
+}
+
+.path-square.current {
     background-color: #00fe00;
 }
 
@@ -105,6 +110,10 @@
   cursor: pointer;
 }
 
+.small-arrow:hover {
+  cursor: pointer;
+}
+
 .App-header {
   /*background-color: #222;*/
   display: flex;
@@ -119,6 +128,10 @@
 
 .App-intro {
   font-size: large;
+}
+
+.rotate-me {
+  transform: rotate(90deg);
 }
 
 /*@keyframes App-logo-spin {

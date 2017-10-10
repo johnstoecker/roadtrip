@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import wagon from './media/wagon.png';
+import wagon from './media/wagon.gif';
+import wagon_single from './media/wagon_single.png'
 import pixelUSA from './media/pixel_usa.svg'
 import pixelMap from './media/pixel_map.json'
 // import tweets from './media/tweets.json'
@@ -7,6 +8,18 @@ import tripTotals from "./media/totals.json"
 import PixelSquare from "./components/PixelSquare.jsx"
 import $ from 'jquery';
 import './App.css';
+const randomMessages = ["[No messages found - the diary is a blank page]",
+"[No messages found -- wagons keep rolling]",
+"[No messages found -- too busy keeping oxen from falling into the river]",
+"[No messages found -- food supplies low, currently drawing lots for who will get eaten]",
+"[No messages found -- wagon drivers too busy chugging Red Bulls]",
+"[No messages found -- the oxen let out plaintive cries on the asphalt]",
+"[No messages found -- too busy doing donuts on the Interstate]",
+"[No messages found -- engine horsepower upgrading to oxenpower]",
+"[No messages found -- oxen distracted by squirrels and pull the wagon off-road]",
+"[No messages found -- too busy bartering away gasoline for more oxen]",
+"[No messages found -- drivers busy mixing up aux and ox cable]",
+"[No messages found -- drivers busy doing squats with oxen and getting yoked]"]
 
 class App extends Component {
   constructor(props) {
@@ -45,6 +58,7 @@ class App extends Component {
 
   // switched lat/lon params up, twitter coordinates, also converted to miles
   // (from https://stackoverflow.com/questions/27928/calculate-distance-between-two-latitude-longitude-points-haversine-formula )
+  // TODO: take out into a utils
   getDistanceFromLonLat(lon1,lat1,lon2,lat2) {
     var R = 3959; // Radius of the earth in miles
     var dLat = this.deg2rad(lat2-lat1);  // deg2rad below
@@ -59,8 +73,66 @@ class App extends Component {
     return d;
   }
 
+  // TODO: take out into a utils
   deg2rad(deg) {
     return deg * (Math.PI/180)
+  }
+
+  getPathPixelIndexAt(pathPixels, x,y) {
+    for(var i=0; i<pathPixels.length; i++) {
+      if(pathPixels[i]["coords"][0] == x && pathPixels[i]["coords"][1] == y) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  // TODO: take out into a utils
+  drawLine(pathPixels, pixelIndex, pixelIndex2) {
+    var newTweets = []
+    var x_diff = pathPixels[pixelIndex]["coords"][0] - pathPixels[pixelIndex2]["coords"][0]
+    var y_diff = pathPixels[pixelIndex]["coords"][1] - pathPixels[pixelIndex2]["coords"][1]
+    var numPixels = Math.max(x_diff, y_diff)
+    for(var i=0; i<numPixels; i++) {
+      var x = Math.floor(x_diff*1.0*i/numPixels)+pathPixels[pixelIndex2]["coords"][0]
+      var y = Math.floor(y_diff*1.0*i/numPixels)+pathPixels[pixelIndex2]["coords"][1]
+      if(this.getPathPixelIndexAt(pathPixels, x,y)==-1) {
+        var messageIndex = Math.floor(Math.random() * (randomMessages.length-1))
+        var tweet = {
+          text: randomMessages[messageIndex],
+          pixel_coords: [x,y],
+          visible: false
+        }
+        newTweets.push(tweet)
+        pathPixels.splice(pixelIndex2+i, 0, {
+            "coords": [x,y],
+            "tweets": [tweet],
+            "visible": false
+        })
+      }
+    }
+    return {pathPixels: pathPixels, newTweets: newTweets}
+  }
+
+  // TODO: take out into a utils
+  hasPath(pathPixels, pixelIndex, pixelIndex2, checkedIndices = []) {
+    if(pixelIndex == pixelIndex2) {
+      return true
+    }
+
+    checkedIndices.push(pixelIndex)
+    for(var x = -1; x <=1; x++) {
+      for(var y=-1; y<=1; y++) {
+        var pathPixelIndex = this.getPathPixelIndexAt(pathPixels, pathPixels[pixelIndex]["coords"][0]+x,pathPixels[pixelIndex]["coords"][1]+y)
+        // if a pixel exists neighboring, and we haven't checked it, check from there
+        if(pathPixelIndex != -1 && !checkedIndices.includes(pathPixelIndex)){
+          if(this.hasPath(pathPixels, pathPixelIndex, pixelIndex2)) {
+            return true
+          }
+        }
+      }
+    }
+    return false
   }
 
   getTweets() {
@@ -106,10 +178,28 @@ class App extends Component {
                   "tweets": [tweets[i]],
                   "visible": false
               })
+              // check if there is a path between the last one and this one
+              if(pathPixelDetails.length > 1 && !that.hasPath(pathPixelDetails, pathPixelDetails.length -1, pathPixelDetails.length-2)) {
+                // if there is not, draw a path of blank squares
+                var newState = that.drawLine(pathPixelDetails, pathPixelDetails.length -1,pathPixelDetails.length -2)
+                pathPixelDetails = newState.pathPixels
+                console.log(tweets)
+                tweets = tweets.slice(0,i).concat(newState.newTweets).concat(tweets.slice(i))
+                i+=newState.newTweets.length
+                // for(var k=0; k<newState.newTweets.length; k++) {
+                //   tweets.splice(i+k-1,0,newState.newTweets[k])
+                //   // TODO -- can i mutate for within the thing? is it bad?
+                //   i+=1;
+                // }
+                console.log(tweets)
+              }
           }
       }
-      console.log(pathPixelDetails)
-
+      for(var i=0; i<pathPixelDetails.length; i++) {
+        if(tweets[tweets.length-1]["pixel_coords"] && pathPixelDetails[i]["coords"][0] == tweets[tweets.length-1]["pixel_coords"][0] && pathPixelDetails[i]["coords"][1] == tweets[tweets.length-1]["pixel_coords"][1]) {
+          pathPixelDetails[i].current = true
+        }
+      }
       that.setState({pathPixelDetails: pathPixelDetails, tweets: tweets, miles: miles.toFixed(0)}, questsCompleted: questsCompleted, questsAccepted: questsAccepted);
     })
   }
@@ -125,11 +215,9 @@ class App extends Component {
   }
 
   onKeyDown(keyCode) {
-    console.log("hi")
-    console.log(keyCode.keyCode)
-    if(keyCode.keyCode == 37) {
+    if(keyCode.keyCode == 37 || keyCode.keyCode == 38) {
       this.goToPrevious()
-    } else if(keyCode.keyCode == 39) {
+    } else if(keyCode.keyCode == 39 || keyCode.keyCode == 40) {
       this.goToNext()
     } else if(keyCode.keyCode == 32) {
       if (this.state.isPlaying) {
@@ -150,9 +238,36 @@ class App extends Component {
     this.showNext(true)
   }
 
-  // this function name is bad, yeah i know....
+  // this one is different because we have the arrow...
+  showNextTweetArrow() {
+    var currentInnerIndex = this.state.currentInnerIndex+1
+    var pathPixelDetails = this.state.pathPixelDetails
+    for(var i=0; i< pathPixelDetails[this.state.currentPathIndex].tweets.length; i++) {
+      pathPixelDetails[this.state.currentPathIndex].tweets[i].visible = false
+    }
+    console.log(currentInnerIndex)
+    console.log(this.state.currentPathIndex)
+    pathPixelDetails[this.state.currentPathIndex].tweets[currentInnerIndex].visible = true
+    // console.log(pathPixelDetails[this.state.currentPathIndex].tweets)
+    this.setState({pathPixelDetails: pathPixelDetails, currentInnerIndex: currentInnerIndex})
+  }
+
+  // this one is different because we have the arrow...
+  // can you please not share this code, ugh
+  showPreviousTweetArrow() {
+    var currentInnerIndex = this.state.currentInnerIndex-1
+    var pathPixelDetails = this.state.pathPixelDetails
+    for(var i=0; i< pathPixelDetails[this.state.currentPathIndex].tweets.length; i++) {
+      pathPixelDetails[this.state.currentPathIndex].tweets[i].visible = false
+    }
+    pathPixelDetails[this.state.currentPathIndex].tweets[currentInnerIndex].visible = true
+    this.setState({pathPixelDetails: pathPixelDetails, currentInnerIndex: currentInnerIndex})
+  }
+
+
+  // this parameter name is bad, yeah i know....
+  // also function is too long...sometimes sacrifices must be made FOR THE GREATER GOOD (speed)
   showNext(reverse = false) {
-    console.log(reverse)
     if(reverse) {
       var currentInnerIndex = this.state.currentInnerIndex - 1;
       var currentIndex = this.state.currentIndex - 1;
@@ -161,7 +276,7 @@ class App extends Component {
       var currentIndex = this.state.currentIndex + 1;
     }
     var currentPathIndex = null
-    console.log(currentIndex)
+
     if(currentIndex < this.state.tweets.length && currentIndex >=0) {
       const currentTweet = this.state.tweets[currentIndex]
       if(currentTweet["pixel_coords"]) {
@@ -230,49 +345,47 @@ class App extends Component {
   }
 
   closePixel(pathPixelIndex) {
-    console.log('closing')
     const pathPixelDetails = this.state.pathPixelDetails;
-    pathPixelDetails[pathPixelIndex].visible = false;
+    pathPixelDetails[pathPixelIndex].visible = pathPixelDetails[pathPixelIndex].current = false;
+    pathPixelDetails[pathPixelIndex].allTweets = false;
     this.setState({pathPixelDetails: pathPixelDetails})
   }
 
   showPixelSquare(pathPixelIndex, allTweets = true, currentInnerIndex = 0) {
-    console.log(currentInnerIndex)
     const pathPixelDetails = this.state.pathPixelDetails;
     for(var j=0; j<pathPixelDetails.length; j++) {
-      pathPixelDetails[j].visible = false
+      pathPixelDetails[j].visible = pathPixelDetails[j].current = false
+      pathPixelDetails[j].allTweets = false
     }
-    if(allTweets) {
-      for(var i=0; i< pathPixelDetails[pathPixelIndex].tweets.length; i++) {
-        pathPixelDetails[pathPixelIndex].tweets[i].visible = true
-      }
-    } else {
-      for(var i=0; i< pathPixelDetails[pathPixelIndex].tweets.length; i++) {
-        pathPixelDetails[pathPixelIndex].tweets[i].visible = false
-      }
-      pathPixelDetails[pathPixelIndex].tweets[currentInnerIndex].visible = true
+    for(var i=0; i< pathPixelDetails[pathPixelIndex].tweets.length; i++) {
+      pathPixelDetails[pathPixelIndex].tweets[i].visible = false
     }
-    pathPixelDetails[pathPixelIndex].visible = !pathPixelDetails[pathPixelIndex].visible;
-    this.setState({pathPixelDetails: pathPixelDetails})
+    console.log(pathPixelDetails[pathPixelIndex])
+    console.log(currentInnerIndex)
+    pathPixelDetails[pathPixelIndex].tweets[currentInnerIndex].visible = true
+    pathPixelDetails[pathPixelIndex].visible = pathPixelDetails[pathPixelIndex].current = !pathPixelDetails[pathPixelIndex].visible;
+    pathPixelDetails[pathPixelIndex].allTweets = allTweets;
+    this.setState({pathPixelDetails: pathPixelDetails, currentInnerIndex: currentInnerIndex, currentPathIndex: pathPixelIndex})
   }
 
   render() {
+    console.log(this.state.tweets)
     const pathPixels = (this.state.pathPixelDetails || []).map((pathPixelDetail, index) => {
       // yes, yes, these should be constants.....
       // 12 -- normal window
       // 6 -- small window (phone)
       // 3 -- tiny (small phone)
-      var leftPos = (pathPixelDetail["coords"][0]+1)*(12+2)
-      var topPos = pathPixelDetail["coords"][1]*(12+2)-1
+      var leftPos = (pathPixelDetail["coords"][0]+1)*(14)
+      var topPos = pathPixelDetail["coords"][1]*(14)-1
       if(this.state.width <= 525) {
         var leftPos = Math.floor((pathPixelDetail["coords"][0]+2)*(3.5))-4
         var topPos = Math.floor(pathPixelDetail["coords"][1]*(3.5))
       } else if (this.state.width <= 1050) {
-        var leftPos = (pathPixelDetail["coords"][0]+1)*(6+1)
-        var topPos = (pathPixelDetail["coords"][1]+1)*(6+1)-7
+        var leftPos = (pathPixelDetail["coords"][0]+1)*(7)
+        var topPos = (pathPixelDetail["coords"][1])*(7)
       }
       return (<div className="path-pixel" style={{position: 'absolute', left: leftPos, top:topPos}}>
-          <PixelSquare pathPixelIndex={index} pathPixel={pathPixelDetail} closePixel={(event) => { this.closePixel(event) }} onPixelClick={(event) => { this.showPixelSquare(event) }}/>
+          <PixelSquare pathPixelIndex={index} currentInnerIndex={this.state.currentInnerIndex} pathPixel={pathPixelDetail} closePixel={(event) => { this.closePixel(event) }} onPixelClick={(event) => { this.showPixelSquare(event) }} onNextTweetClick={(event) => {this.showNextTweetArrow(event)}} onPreviousTweetClick={(event) => {this.showPreviousTweetArrow(event)}}/>
       </div>)
     }
     );
@@ -294,18 +407,22 @@ class App extends Component {
     const navigation = (
       <div className="navigation ignore-react-onclickoutside">
         <div className="navigator navigate-left" onClick={this.goToPrevious.bind(this)}>←</div>
-        <div className={"navigator navigate-play " + (this.state.isPlaying && 'hidden')} onClick={this.play.bind(this)}>▶</div>
-        <div className={"navigator navigate-pause " +(this.state.isPlaying || 'hidden')} onClick={this.pause.bind(this)}>❚❚</div>
+        <div className={"navigator navigate-play rotate-me " + (this.state.isPlaying && 'hidden')} onClick={this.play.bind(this)}>▲</div>
+        <div className={"navigator navigate-pause rotate-me " +(this.state.isPlaying || 'hidden')} onClick={this.pause.bind(this)}>△</div>
         <div className="navigator navigate-right"onClick={this.goToNext.bind(this)}>→</div>
       </div>
     )
+    var wagon_src = wagon_single
+    if(this.state.isPlaying) {
+      wagon_src = wagon
+    }
 
     return (
       <div className="App" onKeyDown={(e) => this.onKeyDown(e)} tabIndex="0">
         <div className="App-header">
-          <img src={wagon} className="App-logo" alt="logo" />
+          <img src={wagon_src} className="App-logo" alt="logo" />
           Iron Maps
-          <img src={wagon} className="App-logo App-logo-second" alt="logo" />
+          <img src={wagon_src} className="App-logo App-logo-second" alt="logo" />
         </div>
         {navigation}
         <div className="map">
