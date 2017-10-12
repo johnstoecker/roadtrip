@@ -30,10 +30,11 @@
 
 .location-label {
     position: relative;
-    top: 20px;
+    top: 8px;
     left: -25px;
     width: 80px;
     font-size: 18px;
+    line-height:1;
 }
 
 .hover-zoom {
@@ -62,6 +63,24 @@
     top: 150px;
     background-color: rgba(255,255,255,0.2);
     display: flex;
+    flex-direction: column;
+    max-width: 100px;
+}
+
+.legend-label-container {
+  display: flex;
+}
+
+.quest {
+  display: flex;
+  font-size: 14px;
+  line-height: 1.2;
+  padding: 2px;
+  text-align: left;
+}
+
+.quest-mark {
+  margin-right: 5px;
 }
 
 .hidden {
@@ -106,6 +125,14 @@
   justify-content: center;
 }
 
+.navigation-small {
+  font-size: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
 .navigator:hover {
   cursor: pointer;
 }
@@ -139,6 +166,12 @@
   to { transform: rotate(360deg); }
 }*/
 
+@media screen and (min-width: 1051px) {
+  .mobile-only {
+    display: none;
+  }
+}
+
 @media screen and (max-width: 1050px) and (min-width: 500px) {
   .App-header {
     height: 80px;
@@ -167,7 +200,7 @@
 
   .location-label {
       position: relative;
-      top: 10px;
+      top: 6px;
       left: -25px;
       width: 70px;
       font-size: 16px;
@@ -178,6 +211,10 @@
     left: 0px;
     top:451px;
     width: 100%;
+  }
+
+  .desktop-only {
+    display: none;
   }
 }
 
@@ -204,6 +241,7 @@
     top: 0px;
     right: 0px;
     font-size: 16px;
+    max-width: 90px;
   }
 
   .path-square {
@@ -213,10 +251,14 @@
 
   .location-label {
       position: relative;
-      top: 10px;
+      top: 6px;
       left: -22px;
       width: 50px;
       font-size: 14px;
+  }
+
+  .navigation-small {
+    font-size: 22px;
   }
 
   .tweet-box {
@@ -224,5 +266,9 @@
     left: 0px;
     top:301px;
     width: 100%;
+  }
+
+  .desktop-only {
+    display: none;
   }
 }

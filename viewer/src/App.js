@@ -21,6 +21,30 @@ const randomMessages = ["[No messages found - the diary is a blank page]",
 "[No messages found -- drivers busy mixing up aux and ox cable]",
 "[No messages found -- drivers busy doing squats with oxen and getting yoked]"]
 
+// https://gist.github.com/andrei-m/982927
+String.prototype.levenshtein = function(string) {
+    var a = this, b = string + "", m = [], i, j, min = Math.min;
+
+    if (!(a && b)) return (b || a).length;
+
+    for (i = 0; i <= b.length; m[i] = [i++]);
+    for (j = 0; j <= a.length; m[0][j] = j++);
+
+    for (i = 1; i <= b.length; i++) {
+        for (j = 1; j <= a.length; j++) {
+            m[i][j] = b.charAt(i - 1) == a.charAt(j - 1)
+                ? m[i - 1][j - 1]
+                : m[i][j] = min(
+                    m[i - 1][j - 1] + 1,
+                    min(m[i][j - 1] + 1, m[i - 1 ][j] + 1))
+        }
+    }
+
+    return m[b.length][a.length];
+}
+
+
+
 class App extends Component {
   constructor(props) {
     super(props);
@@ -31,13 +55,17 @@ class App extends Component {
       currentPathIndex: 0,
       pathPixelDetails: [],
       tweets: [],
+      days: 0,
       miles: 0,
       jokes: 0,
       questsAccepted: 0,
       questsCompleted: 0,
+      quests: [],
       width: '0',
-      height: '0'
+      height: '0',
+      questIndex: 0
     }
+    console.log("TODO: fix these warnings lol")
     this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
   }
 
@@ -88,7 +116,7 @@ class App extends Component {
   }
 
   // TODO: take out into a utils
-  drawLine(pathPixels, pixelIndex, pixelIndex2) {
+  drawLine(pathPixels, pixelIndex, pixelIndex2,previousTweet) {
     var newTweets = []
     var x_diff = pathPixels[pixelIndex]["coords"][0] - pathPixels[pixelIndex2]["coords"][0]
     var y_diff = pathPixels[pixelIndex]["coords"][1] - pathPixels[pixelIndex2]["coords"][1]
@@ -101,7 +129,11 @@ class App extends Component {
         var tweet = {
           text: randomMessages[messageIndex],
           pixel_coords: [x,y],
-          visible: false
+          visible: false,
+          autoGen:true,
+          miles: previousTweet.miles,
+          created_at: previousTweet.created_at,
+          day: previousTweet.day
         }
         newTweets.push(tweet)
         pathPixels.splice(pixelIndex2+i, 0, {
@@ -140,24 +172,37 @@ class App extends Component {
     var that = this;
     $.getJSON('http://ironmaps.com:5001', function(data) {
       var tweets = data["tweets"];
-      var miles=0,jokes=0,questsAccepted=0,questsCompleted = 0;
+      var miles=0,jokes=0,questsAccepted=0,questsCompleted = 0,previousMiles=0;
       var lastCoordinates = null
+      var quests = []
 
       var pathPixelDetails = []
       for(var i=0; i< tweets.length; i++) {
+          tweets[i].day = Math.round(Math.abs(((new Date(tweets[i].created_at)).getTime() - (new Date(tweets[0].created_at)).getTime())/(24*60*60*1000)));
           tweets[i]["text"] = tweets[i]["text"].replace(/\shttps:\/\/t.co\/\S*/, "")
-          if(tweets[i]["text"].toLowerCase().indexOf("quest accept") != -1) {
+          if(tweets[i]["text"].toLowerCase().indexOf("quest accepted: ") != -1) {
             questsAccepted += 1;
+            quests.push({text: tweets[i].text.slice("quest accepted: ".length), complete: false, acceptedIndex: i})
           }
-          if(tweets[i]["text"].toLowerCase().indexOf("quest complete") != -1) {
+          if(tweets[i]["text"].toLowerCase().indexOf("quest completed: ") != -1) {
             questsCompleted += 1;
+            var text = tweets[i]["text"].slice("quest completed: ".length)
+            for(var questInd=0; questInd< quests.length; questInd++) {
+              // account for 3 typos in quests
+              if(quests[questInd].text.levenshtein(text) < 3) {
+                quests[questInd].complete = true
+                quests[questInd].completedIndex = i
+              }
+            }
           }
+          previousMiles = miles
           if(tweets[i]["coordinates"]){
             if(lastCoordinates != null) {
               miles+= that.getDistanceFromLonLat(lastCoordinates[0], lastCoordinates[1], tweets[i]["coordinates"]["coordinates"][0], tweets[i]["coordinates"]["coordinates"][1])
             }
             lastCoordinates = tweets[i]["coordinates"]["coordinates"]
           }
+          tweets[i].miles = miles
           if(lastCoordinates == null)
           tweets.visible = false;
           if(i!=0 && !tweets[i]["pixel_coords"] && tweets[i-1]["pixel_coords"]) {
@@ -181,17 +226,10 @@ class App extends Component {
               // check if there is a path between the last one and this one
               if(pathPixelDetails.length > 1 && !that.hasPath(pathPixelDetails, pathPixelDetails.length -1, pathPixelDetails.length-2)) {
                 // if there is not, draw a path of blank squares
-                var newState = that.drawLine(pathPixelDetails, pathPixelDetails.length -1,pathPixelDetails.length -2)
+                var newState = that.drawLine(pathPixelDetails, pathPixelDetails.length -1,pathPixelDetails.length -2,tweets[i-1])
                 pathPixelDetails = newState.pathPixels
-                console.log(tweets)
                 tweets = tweets.slice(0,i).concat(newState.newTweets).concat(tweets.slice(i))
                 i+=newState.newTweets.length
-                // for(var k=0; k<newState.newTweets.length; k++) {
-                //   tweets.splice(i+k-1,0,newState.newTweets[k])
-                //   // TODO -- can i mutate for within the thing? is it bad?
-                //   i+=1;
-                // }
-                console.log(tweets)
               }
           }
       }
@@ -200,7 +238,8 @@ class App extends Component {
           pathPixelDetails[i].current = true
         }
       }
-      that.setState({pathPixelDetails: pathPixelDetails, tweets: tweets, miles: miles.toFixed(0)}, questsCompleted: questsCompleted, questsAccepted: questsAccepted);
+
+      that.setState({pathPixelDetails: pathPixelDetails, tweets: tweets, miles: miles.toFixed(0), questsCompleted: questsCompleted, questsAccepted: questsAccepted, days: tweets[tweets.length-1].day, quests: quests});
     })
   }
 
@@ -228,6 +267,18 @@ class App extends Component {
     }
   }
 
+  goToNextQuest() {
+      if(this.state.questIndex < this.state.quests.length-1) {
+        this.setState({questIndex: this.state.questIndex + 1})
+      }
+  }
+
+  goToPreviousQuest() {
+    if (this.state.questIndex > 0) {
+      this.setState({questIndex: this.state.questIndex -1})
+    }
+  }
+
   goToNext() {
     this.pause()
     this.showNext(false)
@@ -245,10 +296,7 @@ class App extends Component {
     for(var i=0; i< pathPixelDetails[this.state.currentPathIndex].tweets.length; i++) {
       pathPixelDetails[this.state.currentPathIndex].tweets[i].visible = false
     }
-    console.log(currentInnerIndex)
-    console.log(this.state.currentPathIndex)
     pathPixelDetails[this.state.currentPathIndex].tweets[currentInnerIndex].visible = true
-    // console.log(pathPixelDetails[this.state.currentPathIndex].tweets)
     this.setState({pathPixelDetails: pathPixelDetails, currentInnerIndex: currentInnerIndex})
   }
 
@@ -334,7 +382,7 @@ class App extends Component {
       this.setState({
         currentPathIndex: -1,
         currentInnerIndex: -1,
-        currentIndex: 0
+        currentIndex: -1
       })
       // TODO: maybe stop? or just show play button?
     }
@@ -360,16 +408,50 @@ class App extends Component {
     for(var i=0; i< pathPixelDetails[pathPixelIndex].tweets.length; i++) {
       pathPixelDetails[pathPixelIndex].tweets[i].visible = false
     }
-    console.log(pathPixelDetails[pathPixelIndex])
-    console.log(currentInnerIndex)
     pathPixelDetails[pathPixelIndex].tweets[currentInnerIndex].visible = true
     pathPixelDetails[pathPixelIndex].visible = pathPixelDetails[pathPixelIndex].current = !pathPixelDetails[pathPixelIndex].visible;
     pathPixelDetails[pathPixelIndex].allTweets = allTweets;
     this.setState({pathPixelDetails: pathPixelDetails, currentInnerIndex: currentInnerIndex, currentPathIndex: pathPixelIndex})
   }
 
+  showQuests() {
+    this.setState({showQuests: true})
+  }
+
+  hideQuests() {
+    this.setState({showQuests: false})
+  }
+
   render() {
-    console.log(this.state.tweets)
+    var miles = this.state.miles
+    var day = this.state.days
+    if(this.state.currentIndex != -1) {
+      miles = this.state.pathPixelDetails[this.state.currentPathIndex].tweets[this.state.currentInnerIndex].miles.toFixed(0)
+      day = this.state.pathPixelDetails[this.state.currentPathIndex].tweets[this.state.currentInnerIndex].day
+    }
+
+    const desktopQuests = this.state.quests.map((quest) => {
+      var questCheckMark = (<div className="quest-mark incomplete-quest">□</div>)
+      if(quest.complete) {
+        questCheckMark = (<div className="quest-mark complete-quest">🙂</div>)
+      }
+      return (<div className="quest">
+        {questCheckMark}
+        {quest.text}
+      </div>)
+    })
+
+    const mobileQuests = this.state.quests.map((quest,index) => {
+      var questCheckMark = (<div className="quest-mark incomplete-quest">□</div>)
+      if(quest.complete) {
+        questCheckMark = (<div className="quest-mark complete-quest">🙂</div>)
+      }
+      return (<div className={"quest " +(this.state.questIndex == index || 'hidden')} >
+        {questCheckMark}
+        {quest.text}
+      </div>)
+    })
+
     const pathPixels = (this.state.pathPixelDetails || []).map((pathPixelDetail, index) => {
       // yes, yes, these should be constants.....
       // 12 -- normal window
@@ -388,18 +470,31 @@ class App extends Component {
           <PixelSquare pathPixelIndex={index} currentInnerIndex={this.state.currentInnerIndex} pathPixel={pathPixelDetail} closePixel={(event) => { this.closePixel(event) }} onPixelClick={(event) => { this.showPixelSquare(event) }} onNextTweetClick={(event) => {this.showNextTweetArrow(event)}} onPreviousTweetClick={(event) => {this.showPreviousTweetArrow(event)}}/>
       </div>)
     }
+
     );
     const totals = (
         <div className="legend">
-            <div className="legend-labels">
-                <div className="legend-label">Miles</div>
-                <div className="legend-label">Quests</div>
-                <div className="legend-label">Jokes</div>
+            <div className="legend-label-container">
+              <div className="legend-labels">
+                  <div className="legend-label">Days</div>
+                  <div className="legend-label">Miles</div>
+                  <div className="legend-label">Quests</div>
+              </div>
+              <div className="legend-values">
+                  <div className="legend-value">{day}</div>
+                  <div className="legend-value">{miles}</div>
+                  <div className="legend-value">{this.state.questsCompleted+'/'+this.state.questsAccepted}</div>
+              </div>
             </div>
-            <div className="legend-values">
-                <div className="legend-value">{this.state.miles}</div>
-                <div className="legend-value">{this.state.questsCompleted+'/'+this.state.questsAccepted}</div>
-                <div className="legend-value">{tripTotals["jokes"]}</div>
+            <div className="desktop-only">
+              {desktopQuests}
+            </div>
+            <div className="mobile-only">
+              {mobileQuests}
+              <div className="navigation navigation-small ignore-react-onclickoutside">
+                <div className="navigator navigate-left" onClick={this.goToPreviousQuest.bind(this)}>←</div>
+                <div className="navigator navigate-right"onClick={this.goToNextQuest.bind(this)}>→</div>
+              </div>
             </div>
         </div>
     )
