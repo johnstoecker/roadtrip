@@ -178,7 +178,7 @@ class App extends Component {
 
       var pathPixelDetails = []
       for(var i=0; i< tweets.length; i++) {
-          tweets[i].day = Math.round(Math.abs(((new Date(tweets[i].created_at)).getTime() - (new Date(tweets[0].created_at)).getTime())/(24*60*60*1000)));
+          tweets[i].day = (Math.round(Math.abs(((new Date(tweets[i].created_at)).getTime() - (new Date(tweets[0].created_at)).getTime())/(24*60*60*1000)))) + 1;
           tweets[i]["text"] = tweets[i]["text"].replace(/\shttps:\/\/t.co\/\S*/, "")
           if(tweets[i]["text"].toLowerCase().indexOf("quest accepted: ") != -1) {
             questsAccepted += 1;
