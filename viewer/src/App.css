@@ -211,6 +211,8 @@
     left: 0px;
     top:451px;
     width: 100%;
+    max-height:40%;
+    overflow:scroll;
   }
 
   .desktop-only {
@@ -266,6 +268,8 @@
     left: 0px;
     top:301px;
     width: 100%;
+    max-height:40%;
+    overflow:scroll;
   }
 
   .desktop-only {

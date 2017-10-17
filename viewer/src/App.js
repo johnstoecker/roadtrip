@@ -120,7 +120,7 @@ class App extends Component {
     var newTweets = []
     var x_diff = pathPixels[pixelIndex]["coords"][0] - pathPixels[pixelIndex2]["coords"][0]
     var y_diff = pathPixels[pixelIndex]["coords"][1] - pathPixels[pixelIndex2]["coords"][1]
-    var numPixels = Math.max(x_diff, y_diff)
+    var numPixels = Math.max(Math.abs(x_diff), Math.abs(y_diff))
     for(var i=0; i<numPixels; i++) {
       var x = Math.floor(x_diff*1.0*i/numPixels)+pathPixels[pixelIndex2]["coords"][0]
       var y = Math.floor(y_diff*1.0*i/numPixels)+pathPixels[pixelIndex2]["coords"][1]
