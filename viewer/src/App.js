@@ -158,7 +158,7 @@ class App extends Component {
         var pathPixelIndex = this.getPathPixelIndexAt(pathPixels, pathPixels[pixelIndex]["coords"][0]+x,pathPixels[pixelIndex]["coords"][1]+y)
         // if a pixel exists neighboring, and we haven't checked it, check from there
         if(pathPixelIndex != -1 && !checkedIndices.includes(pathPixelIndex)){
-          if(this.hasPath(pathPixels, pathPixelIndex, pixelIndex2)) {
+          if(this.hasPath(pathPixels, pathPixelIndex, pixelIndex2, checkedIndices)) {
             return true
           }
         }
