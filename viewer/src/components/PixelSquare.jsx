@@ -48,11 +48,11 @@ class PixelSquare extends Component {
       );
       return (
         <div className="path-square-container">
+          {displayName}
           <div className={"path-square hover-zoom " +(!this.props.pathPixel.visible || ' active') +(!this.props.pathPixel.current || ' current')} onClick={this.handleClick}></div>
           <div className={"tweet-box ignore-react-onclickoutside "+((this.props.pathPixel.visible && this.props.pathPixel.tweets.length>0) || 'hidden')}>
             {tweetBoxes}
           </div>
-          {displayName}
         </div>
       );
     }
