@@ -1,10 +1,7 @@
 import React, { Component } from 'react';
 import wagon from './media/wagon.gif';
 import wagon_single from './media/wagon_single.png'
-import pixelUSA from './media/pixel_usa.svg'
-import pixelMap from './media/pixel_map.json'
 // import tweets from './media/tweets.json'
-import tripTotals from "./media/totals.json"
 import PixelSquare from "./components/PixelSquare.jsx"
 import $ from 'jquery';
 import './App.css';
@@ -32,7 +29,7 @@ String.prototype.levenshtein = function(string) {
 
     for (i = 1; i <= b.length; i++) {
         for (j = 1; j <= a.length; j++) {
-            m[i][j] = b.charAt(i - 1) == a.charAt(j - 1)
+            m[i][j] = b.charAt(i - 1) === a.charAt(j - 1)
                 ? m[i - 1][j - 1]
                 : m[i][j] = min(
                     m[i - 1][j - 1] + 1,
@@ -108,7 +105,7 @@ class App extends Component {
 
   getPathPixelIndexAt(pathPixels, x,y) {
     for(var i=0; i<pathPixels.length; i++) {
-      if(pathPixels[i]["coords"][0] == x && pathPixels[i]["coords"][1] == y) {
+      if(pathPixels[i]["coords"][0] === x && pathPixels[i]["coords"][1] === y) {
         return i;
       }
     }
@@ -124,7 +121,7 @@ class App extends Component {
     for(var i=0; i<numPixels; i++) {
       var x = Math.floor(x_diff*1.0*i/numPixels)+pathPixels[pixelIndex2]["coords"][0]
       var y = Math.floor(y_diff*1.0*i/numPixels)+pathPixels[pixelIndex2]["coords"][1]
-      if(this.getPathPixelIndexAt(pathPixels, x,y)==-1) {
+      if(this.getPathPixelIndexAt(pathPixels, x,y)===-1) {
         var messageIndex = Math.floor(Math.random() * (randomMessages.length-1))
         var tweet = {
           text: randomMessages[messageIndex],
@@ -148,7 +145,7 @@ class App extends Component {
 
   // TODO: take out into a utils
   hasPath(pathPixels, pixelIndex, pixelIndex2, checkedIndices = []) {
-    if(pixelIndex == pixelIndex2) {
+    if(pixelIndex === pixelIndex2) {
       return true
     }
 
@@ -350,7 +347,7 @@ class App extends Component {
           }, () => {
             this.showPixelSquare(currentPathIndex, false, currentInnerIndex)
             if(this.state.isPlaying) {
-              this.timeout = window.setTimeout(this.showNext.bind(this, false), 1500);
+              this.timeout = window.setTimeout(this.showNext.bind(this, false), 300);
             }
           });
 
@@ -467,7 +464,17 @@ class App extends Component {
         var topPos = (pathPixelDetail["coords"][1])*(7)
       }
       return (<div className="path-pixel" style={{position: 'absolute', left: leftPos, top:topPos}}>
-          <PixelSquare pathPixelIndex={index} currentInnerIndex={this.state.currentInnerIndex} pathPixel={pathPixelDetail} closePixel={(event) => { this.closePixel(event) }} onPixelClick={(event) => { this.showPixelSquare(event) }} onNextTweetClick={(event) => {this.showNextTweetArrow(event)}} onPreviousTweetClick={(event) => {this.showPreviousTweetArrow(event)}}/>
+          <PixelSquare
+            pathPixelIndex={index}
+            currentPathPixelIndex={this.state.currentPathIndex}
+            currentInnerIndex={this.state.currentInnerIndex}
+            isPlaying={this.state.isPlaying}
+            pathPixel={pathPixelDetail}
+            closePixel={(event) => { this.closePixel(event) }}
+            onPixelClick={(event) => { this.showPixelSquare(event) }}
+            onNextTweetClick={(event) => {this.showNextTweetArrow(event)}}
+            onPreviousTweetClick={(event) => {this.showPreviousTweetArrow(event)}}
+          />
       </div>)
     }
 

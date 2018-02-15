@@ -27,6 +27,11 @@ class PixelSquare extends Component {
     }
 
     render() {
+      // empty pixel if we are playing, and this pixel appears later
+      if(this.props.isPlaying && this.props.pathPixelIndex>this.props.currentPathPixelIndex) {
+        return (<div></div>)
+      }
+
       const tweetBoxes = this.props.pathPixel.tweets.map((tweet, index) => {
         if (!tweet.visible) {
           return false
