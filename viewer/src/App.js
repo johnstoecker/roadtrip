@@ -347,7 +347,7 @@ class App extends Component {
           }, () => {
             this.showPixelSquare(currentPathIndex, false, currentInnerIndex)
             if(this.state.isPlaying) {
-              this.timeout = window.setTimeout(this.showNext.bind(this, false), 300);
+              this.timeout = window.setTimeout(this.showNext.bind(this, false), 1200);
             }
           });
 
