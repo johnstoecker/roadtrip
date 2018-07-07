@@ -1,2 +1,2 @@
-# ironmaps
-Maps over time with an 8-bit feel
+# road trip tracker
+Road trip tracker that auto-updates locations with tweets. Photos, messages, and quests all included.
