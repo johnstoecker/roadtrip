@@ -62,7 +62,6 @@ class App extends Component {
       height: '0',
       questIndex: 0
     }
-    console.log("TODO: fix these warnings lol")
     this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
   }
 
@@ -167,7 +166,12 @@ class App extends Component {
   getTweets() {
     // FML
     var that = this;
-    $.getJSON('http://ironmaps.com:5001', function(data) {
+    var path = 'https://api.ironmaps.com'
+    console.log(window.location)
+    if(window.location.pathname == '/2021'){
+      path += '/2021';
+    }
+    $.getJSON(path, function(data) {
       var tweets = data["tweets"];
       var miles=0,jokes=0,questsAccepted=0,questsCompleted = 0,previousMiles=0;
       var lastCoordinates = null
