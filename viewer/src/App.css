@@ -62,6 +62,10 @@
     margin: auto;
 }
 
+.map-name-input {
+  padding-top: 120px;
+}
+
 .legend {
     position: absolute;
     right: 150px;
