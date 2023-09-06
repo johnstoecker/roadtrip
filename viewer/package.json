@@ -8,7 +8,7 @@
     "react-dom": "^15.6.1",
     "react-scripts": "1.0.11",
     "react-onclickoutside": "6.6.0",
-    "jquery": "2.2.1"
+    "jquery": "3.5.0"
   },
   "scripts": {
     "start": "react-scripts start",
